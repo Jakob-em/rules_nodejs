@@ -54,18 +54,18 @@ def _bash_launcher(ctx, linkable):
     node_bin = ctx.toolchains["@rules_nodejs//nodejs:toolchain_type"].nodeinfo
     launcher = ctx.actions.declare_file("_%s_launcher.sh" % ctx.label.name)
 
-    # The working directory in a bazel binary is runfiles/my_wksp
-    node_paths = ["$(pwd)/../node_modules"]
-    if len(linkable):
-        pkgs = [link[LinkablePackageInfo].package_name for link in linkable]
-        node_paths.extend([
-            "$(rlocation node_modules/{0})/{1}".format(
-                p,
-                "/".join([".."] * len(p.split("/"))),
-            )
-            for p in pkgs
-        ])
-    node_path = "export NODE_PATH=" + ":".join(node_paths)
+    pkgs = [link[LinkablePackageInfo].package_name for link in linkable]
+    node_paths = [
+        # Workaround to make modules resolve under `bazel run` - doesn't seem principled though
+        "$(pwd)/../node_modules",
+    ]
+    node_paths.extend([
+        "$(rlocation node_modules/{0})/{1}".format(
+            p,
+            "/".join([".."] * len(p.split("/"))),
+        )
+        for p in pkgs
+    ])
 
     ctx.actions.write(
         launcher,
@@ -82,7 +82,7 @@ $(rlocation {entry_point}) \\
             node = _strip_external(node_bin.target_tool_path),
             entry_point = to_manifest_path(ctx, ctx.file.entry_point),
             args = " ".join(ctx.attr.args),
-            node_path = node_path,
+            node_path = "export NODE_PATH=" + ":".join(node_paths),
         ),
         is_executable = True,
     )

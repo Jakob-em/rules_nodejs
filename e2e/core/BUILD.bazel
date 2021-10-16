@@ -174,7 +174,7 @@ write_file(
 )
 
 nodejs_binary(
-    name = "bin_w_first_party_static_link",
+    name = "bin6",
     data = ["//lib"],
     entry_point = "case6.js",
 )
@@ -184,7 +184,7 @@ run_binary(
     srcs = [],
     outs = ["actual6"],
     args = ["$(location actual6)"],
-    tool = ":bin_w_first_party_static_link",
+    tool = ":bin6",
 )
 
 diff_test(
