@@ -10,20 +10,18 @@ http_archive(
 
 load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains", "rules_nodejs_dependencies")
 load("npm_import.bzl", "npm_import")
+load("translate_package_lock.bzl", "translate_package_lock")
 
 # This just gives us bazel-skylib
 rules_nodejs_dependencies()
 
+# Get the nodejs toolchain (the node interpreter binary for host and/or target platform)
 nodejs_register_toolchains(
     name = "node16",
     node_version = "16.9.0",
 )
 
-# TODO: we should have a translate_package_lock rule like
-# https://github.com/alexeagle/rules_nodejs/blob/stable/internal/npm_tarballs/translate_package_lock.bzl
-# that automatically creates npm_import rules for everything the project already depends on.
-# That would provide syntax sugar for the typical case where the dependencies were specified in package.json
-# and a package manager already fetched integrity hashes from the registry.
+# Manually import a package using explicit coordinates
 npm_import(
     integrity = "sha512-ULr0LDaEqQrMFGyQ3bhJkLsbtrQ8QibAseGZeaSUiT/6zb9IvIkomWHJIvgvwad+hinRAgsI51JcWk2yvwyL+w==",
     package = "acorn",
@@ -31,8 +29,14 @@ npm_import(
     deps = [],
 )
 
-npm_import(
-    integrity = "sha512-zjQ69G564OCIWIOHSXyQEEDpdpGl+G348RAKY0XXy9Z5kU9Vzv1GMNnkar/ZJ8dzXB3COzD9Mo9NtRZ4xfgUww==",
-    package = "@types/node",
-    version = "15.12.2",
+# Read the package-lock.json file to automate creation of remaining npm_import rules
+translate_package_lock(
+    name = "npm_deps",
+    package_lock = "//:package-lock.json",
 )
+
+# This is the result of translate_package_lock
+load("@npm_deps//:repositories.bzl", "npm_repositories")
+
+# Declare remaining npm_import rules
+npm_repositories()

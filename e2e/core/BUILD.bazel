@@ -192,3 +192,39 @@ diff_test(
     file1 = "expected_ast.json",
     file2 = "actual6",
 )
+
+#######################################
+# Test case 7
+# transitive npm dependencies
+
+write_file(
+    name = "write7",
+    out = "case7.js",
+    content = ["require('fs').writeFileSync(process.argv[2], require('@gregmagolan/test-b'))"],
+)
+
+write_file(
+    name = "expected7",
+    out = "expected7.txt",
+    content = ["test-b-0.0.2/test-a-0.0.1"],
+)
+
+nodejs_binary(
+    name = "bin7",
+    data = ["@npm__gregmagolan_test-b-0.0.2"],
+    entry_point = "case7.js",
+)
+
+run_binary(
+    name = "run7",
+    srcs = [],
+    outs = ["actual7"],
+    args = ["$(location actual7)"],
+    tool = ":bin7",
+)
+
+diff_test(
+    name = "test7",
+    file1 = "expected7",
+    file2 = "actual7",
+)

@@ -40,6 +40,7 @@ copy_file(
 nodejs_package(
     name = "{name}",
     src = "_{name}",
+    deps = {deps},
     package_name = "{package_name}",
     visibility = ["//visibility:public"],
 )
@@ -47,12 +48,12 @@ nodejs_package(
         name = repository_ctx.name,
         nested_folder = result.stdout.rstrip("\n"),
         package_name = repository_ctx.attr.package,
+        deps = [str(d) for d in repository_ctx.attr.deps],
     ))
 
 _npm_import = repository_rule(
     implementation = _npm_import_impl,
     attrs = {
-        # TODO(alexeagle): wire this up
         "deps": attr.label_list(),
         "integrity": attr.string(),
         "package": attr.string(mandatory = True),
